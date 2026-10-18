@@ -38,9 +38,10 @@
         },
         "reconfigure": {
           "title": "Edit remote",
-          "description": "Remote id {remote_id}. The id and rolling code cannot be changed, as that would unpair the motor.",
+          "description": "Remote id {remote_id}. The id cannot be changed, and the rolling code can only be raised: a lower code would unpair the motor. Raise it only to recover, for example after restoring an old backup.",
           "data": {
             "name": "Name",
+            "rolling_code": "Next rolling code",
             "repetitions": "Frame repetitions",
             "device_class": "Device type"
           }
@@ -48,7 +49,8 @@
       },
       "error": {
         "invalid_remote_id": "Enter a number between 1 and 0xFFFFFF.",
-        "remote_id_in_use": "Another remote already uses this id."
+        "remote_id_in_use": "Another remote already uses this id.",
+        "rolling_code_lower": "The rolling code can only be raised, never lowered."
       },
       "abort": {
         "reconfigure_successful": "Remote updated."

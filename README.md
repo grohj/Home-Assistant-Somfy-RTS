@@ -18,6 +18,7 @@ on Core.
   remote reuse a code
 - Import remotes from another controller (for example a Homebridge plugin)
   without re-pairing the motors
+- One-click rolling code backup through *Download diagnostics*
 
 RTS is one-way: the motors never report back. The cover state is whatever
 Home Assistant last sent.
@@ -90,14 +91,36 @@ From **homebridge-somfy-rts-v2** (or similar Pi-Somfy based plugins): the id
 is the `id` in the plugin config, and the next rolling code is the number in
 `somfy_rts_<id>.txt` in the Homebridge storage folder.
 
+## Back up your rolling codes
+
+A remote's id and **next rolling code** are all you need to restore it
+anywhere, without re-pairing. Three easy ways to get them:
+
+1. **Download diagnostics:** Settings → Devices & services → Somfy RTS
+   (pigpio) → ⋮ → *Download diagnostics*. The JSON file lists every remote's
+   `remote_id` and `next_rolling_code`.
+2. **Rolling code sensor:** each remote device has a diagnostic
+   *Rolling code* sensor showing the next code.
+3. **The storage file:** `config/.storage/somfy_rts.<entry id>`, a small JSON
+   map of remote id to next code. Home Assistant backups include it.
+
+### Recovering
+
+If codes were lost or you restored an old backup, the motors may ignore the
+remote because they already saw higher codes. Open the remote's settings
+(⋮ → *Reconfigure*) and raise **Next rolling code** above the last code you
+used. Somfy motors accept codes up to about 100 ahead of the last one they
+saw, so raising it by 20 to 50 is usually safe. The code can never be
+lowered from the UI, since a lower code unpairs the motor.
+
 ## Notes
 
 - **Frame repetitions:** more repetitions improve range but make every press
   slightly longer. 1 to 3 is typical.
 - **Stop uses My.** On a moving motor, My stops it. On a motor at rest, My
   moves it to its stored favourite position.
-- The remote id and rolling code cannot be edited after creation, because
-  changing them would unpair the motor.
+- The remote id cannot be edited after creation, and the rolling code can
+  only be raised, because anything else would unpair the motor.
 
 ## Credits
 

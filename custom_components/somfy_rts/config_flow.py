@@ -10,8 +10,10 @@ import voluptuous as vol
 from homeassistant.components.cover import CoverDeviceClass
 from homeassistant.config_entries import (
     ConfigEntry,
+    ConfigEntryState,
     ConfigFlow,
     ConfigFlowResult,
+    ConfigSubentry,
     ConfigSubentryFlow,
     SubentryFlowResult,
 )
@@ -39,6 +41,7 @@ from .const import (
     MAX_REPETITIONS,
     SUBENTRY_REMOTE,
 )
+from .hub import RemoteConfig
 from .rts import MAX_REMOTE_ID, MAX_ROLLING_CODE, parse_remote_id
 from .transmitter import PigpioTransmitter, TransmitterError
 
@@ -126,8 +129,8 @@ class SomfyRtsConfigFlow(ConfigFlow, domain=DOMAIN):
 class RemoteSubentryFlow(ConfigSubentryFlow):
     """Add or edit a virtual remote.
 
-    The remote id and starting rolling code are fixed once created: changing
-    them would desync the motors the remote is paired with.
+    The remote id is fixed once created and the rolling code can only go up:
+    anything else would desync the motors the remote is paired with.
     """
 
     def _used_remote_ids(self) -> set[int]:
@@ -192,26 +195,42 @@ class RemoteSubentryFlow(ConfigSubentryFlow):
             description_placeholders={"max_remote_id": f"0x{MAX_REMOTE_ID:06X}"},
         )
 
+    def _current_rolling_code(self, subentry: ConfigSubentry) -> int:
+        entry = self._get_entry()
+        remote = RemoteConfig.from_subentry(subentry)
+        if entry.state is ConfigEntryState.LOADED:
+            return entry.runtime_data.rolling_code(remote)
+        return remote.initial_rolling_code
+
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Edit the name, repetitions and device class of a remote."""
+        """Edit a remote. The rolling code can only be raised, for recovery."""
         subentry = self._get_reconfigure_subentry()
+        current_code = self._current_rolling_code(subentry)
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_update_and_abort(
-                self._get_entry(),
-                subentry,
-                title=user_input[CONF_NAME],
-                data={
-                    **subentry.data,
-                    CONF_REPETITIONS: user_input[CONF_REPETITIONS],
-                    CONF_DEVICE_CLASS: user_input[CONF_DEVICE_CLASS],
-                },
-            )
+            if user_input[CONF_ROLLING_CODE] < current_code:
+                errors[CONF_ROLLING_CODE] = "rolling_code_lower"
+            else:
+                return self.async_update_and_abort(
+                    self._get_entry(),
+                    subentry,
+                    title=user_input[CONF_NAME],
+                    data={
+                        **subentry.data,
+                        CONF_ROLLING_CODE: user_input[CONF_ROLLING_CODE],
+                        CONF_REPETITIONS: user_input[CONF_REPETITIONS],
+                        CONF_DEVICE_CLASS: user_input[CONF_DEVICE_CLASS],
+                    },
+                )
 
         schema = vol.Schema(
             {
                 vol.Required(CONF_NAME, default=subentry.title): str,
+                vol.Required(CONF_ROLLING_CODE, default=current_code): vol.All(
+                    vol.Coerce(int), vol.Range(min=0, max=MAX_ROLLING_CODE)
+                ),
                 vol.Required(
                     CONF_REPETITIONS,
                     default=subentry.data.get(CONF_REPETITIONS, DEFAULT_REPETITIONS),
@@ -225,6 +244,7 @@ class RemoteSubentryFlow(ConfigSubentryFlow):
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=schema,
+            errors=errors,
             description_placeholders={
                 "remote_id": f"0x{subentry.data[CONF_REMOTE_ID]:06X}"
             },

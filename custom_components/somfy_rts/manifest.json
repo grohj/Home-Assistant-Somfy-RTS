@@ -7,6 +7,6 @@
   "integration_type": "hub",
   "iot_class": "assumed_state",
   "issue_tracker": "https://github.com/grohj/Home-Assistant-Somfy-RTS/issues",
-  "requirements": ["pigpio==1.78"],
-  "version": "0.1.0"
+  "requirements": ["pigpio>=1.78"],
+  "version": "0.1.1"
 }
