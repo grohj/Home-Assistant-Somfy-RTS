@@ -1,0 +1,87 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Somfy RTS transmitter",
+        "description": "Connect to the pigpio daemon that drives your 433.42 MHz transmitter.",
+        "data": {
+          "host": "pigpiod host",
+          "port": "pigpiod port",
+          "gpio": "Transmitter GPIO (BCM numbering)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to pigpiod. Check that it is running and reachable."
+    },
+    "abort": {
+      "already_configured": "This transmitter is already configured."
+    }
+  },
+  "config_subentries": {
+    "remote": {
+      "initiate_flow": {
+        "user": "Add remote"
+      },
+      "entry_type": "Remote",
+      "step": {
+        "user": {
+          "title": "Add a virtual remote",
+          "description": "Each shutter needs its own remote. Keep the suggested id for a new shutter, or enter the id and next rolling code of a remote you are migrating from another controller (up to {max_remote_id}).",
+          "data": {
+            "name": "Name",
+            "remote_id": "Remote id (decimal or 0x hex)",
+            "rolling_code": "Next rolling code",
+            "repetitions": "Frame repetitions",
+            "device_class": "Device type"
+          }
+        },
+        "reconfigure": {
+          "title": "Edit remote",
+          "description": "Remote id {remote_id}. The id and rolling code cannot be changed, as that would unpair the motor.",
+          "data": {
+            "name": "Name",
+            "repetitions": "Frame repetitions",
+            "device_class": "Device type"
+          }
+        }
+      },
+      "error": {
+        "invalid_remote_id": "Enter a number between 1 and 0xFFFFFF.",
+        "remote_id_in_use": "Another remote already uses this id."
+      },
+      "abort": {
+        "reconfigure_successful": "Remote updated."
+      }
+    }
+  },
+  "selector": {
+    "device_class": {
+      "options": {
+        "shutter": "Shutter",
+        "blind": "Blind",
+        "awning": "Awning",
+        "curtain": "Curtain",
+        "shade": "Shade",
+        "window": "Window",
+        "garage": "Garage door",
+        "gate": "Gate"
+      }
+    }
+  },
+  "entity": {
+    "button": {
+      "my": {
+        "name": "My position"
+      },
+      "prog": {
+        "name": "Prog (pairing)"
+      }
+    },
+    "sensor": {
+      "rolling_code": {
+        "name": "Rolling code"
+      }
+    }
+  }
+}
